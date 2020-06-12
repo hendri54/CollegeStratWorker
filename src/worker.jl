@@ -53,6 +53,8 @@ function Base.show(io :: IO,  wk :: Worker)
 end
 
 
+## -----------  Access properties
+
 function work_periods(wk :: Worker, workStartAge)
     return wk.retireAge .- workStartAge
 end

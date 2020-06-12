@@ -42,33 +42,33 @@ end
 # const WorkerVector  = VectorBySchool{Worker}
 
 
-"""
-	$(SIGNATURES)
+# """
+# 	$(SIGNATURES)
 
-Switches that define a `WorkerSet`.
-"""
-Base.@kwdef mutable struct WorkerSetSwitches
-    # Does the model have fixed utility from working by schooling?
-    hasUFixed :: Bool = true
-    retireAge :: TimeInt = 65 - 19
-    retireDuration :: TimeInt = 80 - 65
-    nSchool :: Int
-end
+# Switches that define a `WorkerSet`.
+# """
+# Base.@kwdef mutable struct WorkerSetSwitches
+#     # Does the model have fixed utility from working by schooling?
+#     hasUFixed :: Bool = true
+#     retireAge :: TimeInt = 65 - 19
+#     retireDuration :: TimeInt = 80 - 65
+#     nSchool :: Int
+# end
 
 
-"""
-	$(SIGNATURES)
+# """
+# 	$(SIGNATURES)
 
-ModelObject with calibrated worker parameters.
-"""
-Base.@kwdef mutable struct WorkerSet{F1 <: AbstractFloat} <: ModelObject
-    objId :: ObjectId
-    switches :: WorkerSetSwitches
-    "Log Wage by schooling"
-    wages :: IncreasingVector
-    "Experience log wage profile. Zero intercept."
-    xp :: Vector{F1}
-end
+# ModelObject with calibrated worker parameters.
+# """
+# Base.@kwdef mutable struct WorkerSet{F1 <: AbstractFloat} <: ModelObject
+#     objId :: ObjectId
+#     switches :: WorkerSetSwitches
+#     "Log Wage by schooling"
+#     wages :: IncreasingVector
+#     "Experience log wage profile. Zero intercept."
+#     xp :: Vector{F1}
+# end
 
 
 """

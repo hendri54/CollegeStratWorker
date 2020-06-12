@@ -24,20 +24,12 @@ mu_wealth
 cons_age1
 ```
 
-## WorkerSet
-
-```@docs
-WorkerSetSwitches
-WorkerSet
-make_worker_set
-make_worker
-```
-
 ## WorkHistories
 
 ```@docs
 WorkHistories
 simulate_workers!
+simulate_one_worker!
 ```
 
 --------------

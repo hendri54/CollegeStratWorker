@@ -15,18 +15,18 @@ const TimeInt = UInt8
 # end
 
 # Where to put this? +++++
-Base.@kwdef struct UtilAll{F1 <: AbstractFloat}
-    discFactor :: F1 = F1(0.9)
-    cCurvature :: F1 = F1(2.5)
-    lCurvature :: F1 = F1(1.5)
-    wtLeisure :: F1 = F1(0.6)
-    leisure_sV :: Vector{F1} = F1.([0.5, 0.1, 0.7, 1.2])
-    hasWorkLeisure :: Bool = true
-end
+# Base.@kwdef struct UtilAll{F1 <: AbstractFloat}
+#     discFactor :: F1 = F1(0.9)
+#     cCurvature :: F1 = F1(2.5)
+#     lCurvature :: F1 = F1(1.5)
+#     wtLeisure :: F1 = F1(0.6)
+#     leisure_sV :: Vector{F1} = F1.([0.5, 0.1, 0.7, 1.2])
+#     hasWorkLeisure :: Bool = true
+# end
 
-function make_test_util_all()
-    return UtilAll{Float64}(discFactor = 0.9)
-end
+# function make_test_util_all()
+#     return UtilAll{Float64}(discFactor = 0.9)
+# end
 
 
 function earnings_test()
@@ -112,30 +112,30 @@ function utility_test()
 end
 
 
-function worker_set_test()
-    @testset "WorkerSet" begin
-        nSchool = 4;
-		wss = WorkerSetSwitches(nSchool = nSchool);
-		ws = CollegeStratWorker.make_test_worker_set(wss);
-		utilS = make_test_util_all();
-		R = 1.04;
-        iSchool = 2;
+# function worker_set_test()
+#     @testset "WorkerSet" begin
+#         nSchool = 4;
+# 		wss = WorkerSetSwitches(nSchool = nSchool);
+# 		ws = CollegeStratWorker.make_test_worker_set(wss);
+# 		utilS = make_test_util_all();
+# 		R = 1.04;
+#         iSchool = 2;
 
-		# Fixed utilities
-		uFixed = u_fixed(ws, utilS, iSchool);
-		@test isa(uFixed, Float64)
+# 		# Fixed utilities
+# 		uFixed = u_fixed(ws, utilS, iSchool);
+# 		@test isa(uFixed, Float64)
 
-		# Wages
-		wage_sV = wage_by_school(ws);
-		# @test length(wage_sV) == nSchool
-		@test wage(ws, iSchool) ≈ wage_sV[iSchool]
+# 		# Wages
+# 		wage_sV = wage_by_school(ws);
+# 		# @test length(wage_sV) == nSchool
+# 		@test wage(ws, iSchool) ≈ wage_sV[iSchool]
 
-		# Make worker
-		wk = make_worker(ws, utilS, R, iSchool);
-		print(wk)
-		@test validate_worker(wk)
-	end
-end
+# 		# Make worker
+# 		wk = make_worker(ws, utilS, R, iSchool);
+# 		print(wk)
+# 		@test validate_worker(wk)
+# 	end
+# end
 
 
 function simulate_test()
@@ -158,11 +158,11 @@ function simulate_test()
         @test isequal(h_work_start(wh), hWorkStartV)
         @test isequal(k_work_start(wh), kWorkStartV)
 
-		wss = WorkerSetSwitches(nSchool = nSchool);
-		ws = CollegeStratWorker.make_test_worker_set(wss);
-		utilS = make_test_util_all();
+		# wss = WorkerSetSwitches(nSchool = nSchool);
+		# ws = CollegeStratWorker.make_test_worker_set(wss);
+		# utilS = make_test_util_all();
 		R = 1.04;
-		workerV = [make_worker(ws, utilS, R, iSchool)  for iSchool = 1 : nSchool];
+		workerV = [CollegeStratWorker.make_test_worker(iSchool)  for iSchool = 1 : nSchool];
 
         simulate_workers!(wh, workerV);
         @test validate_wh(wh)
@@ -173,7 +173,7 @@ end
 @testset "Worker" begin
 	earnings_test();
 	utility_test();
-    worker_set_test();
+    # worker_set_test();
     simulate_test();
 end
 
