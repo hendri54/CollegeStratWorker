@@ -173,6 +173,7 @@ end
 @testset "Worker" begin
 	earnings_test();
 	utility_test();
+	include("compensating_var_test.jl");
     # worker_set_test();
     simulate_test();
 end

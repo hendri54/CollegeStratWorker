@@ -26,7 +26,7 @@ mutable struct Worker{F1 <: AbstractFloat}
     util :: WorkerUtility
     "Experience log wage profile. Zero intercept."
     xp :: Vector{F1}
-
+    # Earnings are `wage * h`
     wage :: F1
     "Gross interest rate"
     R :: F1
