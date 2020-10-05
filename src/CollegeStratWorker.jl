@@ -1,7 +1,7 @@
 module CollegeStratWorker
 
 using DocStringExtensions
-using CommonLH, StructLH, UtilityFunctionsLH
+using CommonLH, StructLH, UtilityFunctionsLH, ModelObjectsLH, ModelParams
 
 import Roots: find_zero
 

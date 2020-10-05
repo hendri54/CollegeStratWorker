@@ -1,7 +1,7 @@
 name = "CollegeStratWorker"
 uuid = "2a03911c-38cb-4991-90cf-b19c323ec85f"
 authors = ["hendri54 <hendricksl@protonmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 CommonLH = "96c8dc4a-d23f-53b2-b478-aad5d5ab80bd"
