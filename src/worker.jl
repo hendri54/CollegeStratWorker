@@ -8,7 +8,12 @@ function make_test_worker(s :: Integer)
     retireIncome = 0.5 * wage;
     R = 1.04;
     xp = collect(range(0.0, 0.6, length = retireAge));
-    return Worker(uFct, xp, wage, R, retireAge, retireDuration, retireIncome)
+    kMin = -20.0;
+    kMax = 75.0;
+    hMin = 1.0;
+    hMax = 9.5;
+    return Worker(uFct, xp, wage, R, retireAge, retireDuration, retireIncome,
+        kMin, kMax, hMin, hMax)
 end
 
 
@@ -38,10 +43,6 @@ end
 StructLH.describe(wk :: Worker) = settings_table(wk);
 
 
-# function show(io :: IO,  wk :: Worker)
-#     show_text_table(settings_table(wk), io = io)
-# end
-
 function Base.show(io :: IO,  wk :: Worker)
     wageStr = string(round(wk.wage, digits = 2));
     maxExper, maxAge = findmax(wk.xp);
@@ -55,18 +56,29 @@ end
 
 ## -----------  Access properties
 
-function work_periods(wk :: Worker, workStartAge)
-    return wk.retireAge .- workStartAge
-end
+k_range(wk :: Worker) = (wk.kMin, wk.kMax);
+h_range(wk :: Worker) = (wk.hMin, wk.hMax);
+k_min(wk :: Worker) = wk.kMin;
+k_max(wk :: Worker) = wk.kMax;
+h_min(wk :: Worker) = wk.hMin;
+h_max(wk :: Worker) = wk.hMax;
 
-function cons_periods(wk :: Worker, workStartAge)
-    return work_periods(wk, workStartAge) .+ wk.retireDuration
-end
+# Life-span of a worker with work start 1
+max_life_span(wk :: Worker) = wk.retireAge + wk.retireDuration - 1;
+retire_periods(wk :: Worker, workStartAge) = wk.retireDuration;
 
+# These ages are relative to `workStartAge`
+life_span(wk :: Worker, workStartAge) = 
+    work_periods(wk, workStartAge) .+ retire_periods(wk, workStartAge);
+cons_periods(wk :: Worker, workStartAge) = life_span(wk, workStartAge);
+
+last_work_age(wk :: Worker, workStartAge) = 
+    wk.retireAge .- workStartAge;
+work_periods(wk :: Worker, workStartAge) = last_work_age(wk, workStartAge);
+work_ages(wk :: Worker, workStartAge) = 1 : last_work_age(wk, workStartAge);
 # Retirement ages (relative to workStartAge)
-function retire_ages(wk :: Worker, workStartAge)
-    return work_periods(wk, workStartAge) .+ (1 : wk.retireDuration)
-end
+retire_ages(wk :: Worker, workStartAge) = 
+    last_work_age(wk, workStartAge) .+ (1 : retire_periods(wk, workStartAge));
 
 # Input: ages relative to workStartAge
 # is_retired(wk :: Worker, workStartAge :: Integer, tV) = 
@@ -79,11 +91,14 @@ end
 # end
 
 # Present value of retirement income, discounted to workStartAge
-# test this +++++
 function pv_retire_income(wk :: Worker, workStartAge)
     tV = retire_ages(wk, workStartAge);
-    return wk.retireIncome .* sum((1 / wk.R) .^ (tV .- 1));
+    pv = retire_income(wk) * pv_factor(wk.R, length(tV));
+    pv *= ((1 / wk.R) ^ (tV[1] - 1));
+    return pv
 end
+
+retire_income(wk :: Worker) = wk.retireIncome;
 
 
 """
@@ -118,6 +133,7 @@ end
 
 
 # Earnings profile by experience
+# Does not include retirement income
 function earn_profile(wk :: Worker{F1}, workStartAge :: Integer, h :: F1;
     experV = nothing) where F1
 
@@ -130,20 +146,22 @@ end
     $(SIGNATURES)
 
 Lifetime earnings for a vector of h. Discounted to `workStartAge`.
+Does not include retirement income.
 """
-function lifetime_earnings(w :: Worker{F1}, workStartAge :: Integer, h :: Array{F1}) where F1
+function lifetime_earnings(w :: Worker{F1}, workStartAge :: Integer, 
+    h :: AbstractArray{F1}) where F1
 
-    T = work_periods(w, workStartAge);
-    lty = h .* sum(((1 / w.R) .^ (0 : (T - 1))) .*
-        earn_profile(w, workStartAge, 1.0));
+    # T = work_periods(w, workStartAge);
+    # This way it works for array `h` inputs.
+    lty = h .* present_value(earn_profile(w, workStartAge, 1.0), w.R);
     @assert all(lty .> 0.0)  "Negative lifetime earnings"
     return lty
 end
 
 function lifetime_earnings(w :: Worker{F1}, workStartAge :: Integer, h :: F1) where F1
-    lty = lifetime_earnings(w, workStartAge, [h]);
-    @assert lty[1] > 0.0
-    return lty[1]
+    lty = only(lifetime_earnings(w, workStartAge, [h]));
+    @assert lty > 0.0
+    return lty
 end
 
 

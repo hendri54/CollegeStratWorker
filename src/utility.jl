@@ -54,4 +54,9 @@ function cons_age1(u :: WorkerUtility{F1}, T :: Integer, R :: F1, ltIncome) wher
     return UtilityFunctionsLH.cons_age1(u.util, u.discFactor, R, T, ltIncome)
 end
 
+
+function cons_path(u :: WorkerUtility{F1}, T :: Integer, R :: F1, ltIncome) where F1
+    return UtilityFunctionsLH.cons_path(u.util, u.discFactor, R, T, ltIncome)
+end
+
 # ----------------

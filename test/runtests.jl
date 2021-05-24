@@ -1,8 +1,10 @@
-using CollegeStratWorker
+using CollegeStratBase, CollegeStratWorker
 using Random, Test
 using ModelParams, UtilityFunctionsLH
 
 const TimeInt = UInt8
+
+csw = CollegeStratWorker;
 
 # function experTest()
 # 	@testset "Experience" begin
@@ -29,85 +31,91 @@ const TimeInt = UInt8
 # end
 
 
+function access_test()
+	@testset "Access routines" begin
+		wk = csw.make_test_worker(2);
+		@test csw.max_life_span(wk) == csw.life_span(wk, 1)
+
+		workStartAge = 3;
+		nc = csw.cons_periods(wk, workStartAge);
+		nWork = csw.work_periods(wk, workStartAge);
+		nRetire = csw.retire_periods(wk, workStartAge);
+		@test nc == (nWork + nRetire)
+
+		workAgeV = csw.work_ages(wk, workStartAge);
+		retireAgeV = csw.retire_ages(wk, workStartAge);
+		@test length(workAgeV) == nWork;
+		@test length(retireAgeV) == nRetire;
+		@test workAgeV[nWork] + 1 == retireAgeV[1];
+		@test csw.last_work_age(wk, workStartAge) == workAgeV[nWork];
+	end
+end
+
 function earnings_test()
 	@testset "Lifetime earnings" begin
-		w = CollegeStratWorker.make_test_worker(2);
-        @test validate_worker(w);
+		wk = CollegeStratWorker.make_test_worker(2);
+        @test validate_worker(wk);
         println("\n-------------")
-		println(w);
+		println(wk);
 
-		xV = log_exper_profile(w, 1; experV = 1 : 10);
+		xV = log_exper_profile(wk, 1; experV = 1 : 10);
 		@test xV[1] ≈ 0.0
 		@test all(diff(xV) .> 0.0)
 		# Giving work start age
-		x2V = log_exper_profile(w, 5);
+		x2V = log_exper_profile(wk, 5);
 
 		workStartAge = 3;
 		h0 = 1.5;
-		earn10 = earn_profile(w, workStartAge, h0, experV = 10);
+		earn10 = earn_profile(wk, workStartAge, h0, experV = 10);
 		@test earn10 > 0.0
 		@test isa(earn10, AbstractFloat)
 
 		xpV = 7 : 15;
-		earnV = earn_profile(w, workStartAge, h0, experV = xpV);
+		earnV = earn_profile(wk, workStartAge, h0, experV = xpV);
 		@test all(earnV .> 0.0)
 		@test size(earnV) == size(xpV)
 
 		hM = [2.0 3.0 4.0; 0.6 0.7 0.8];
 		workStartAge = 2;
-		ltyV = lifetime_earnings(w, workStartAge, hM);
+		ltyV = lifetime_earnings(wk, workStartAge, hM);
 		@test all(ltyV .> 0) && (size(ltyV) == size(hM))
 
-		lty2V = lifetime_earnings(w, workStartAge + 1, hM);
+		for (j, h) in enumerate(hM)
+			lty2 = present_value(earn_profile(wk, workStartAge, h), wk.R);
+			@test isapprox(lty2, ltyV[j])
+		end
+
+		lty2V = lifetime_earnings(wk, workStartAge + 1, hM);
 		@test all(lty2V .< ltyV)
+
+		# Retirement income
+		T = csw.life_span(wk, workStartAge);
+		incomeV = zeros(T);
+		incomeV[csw.retire_ages(wk, workStartAge)] .= csw.retire_income(wk);
+		pv = present_value(incomeV, wk.R);
+		@test isapprox(pv, csw.pv_retire_income(wk, workStartAge));
 	end
 end
 
-function utility_test()
-	@testset "Lifetime utility" begin
-		w = CollegeStratWorker.make_test_worker(3);
-        println("\n-------------")
-		println(w);
 
-        # Lifetime utility
-		hV = [1.8, 2.3];
-		assetV = [-0.7, 0.9, 3.2];
-		workStartAge = 3;
 
-		# On a grid
-		utilM = lifetime_utility_grid(w, workStartAge, assetV, hV);
-		@test size(utilM) == (length(assetV), length(hV))
-		# Increasing in h
-		@test all(utilM[:,2] .> utilM[:,1])
-		# Increasing in assets
-		util2M = lifetime_utility_grid(w, workStartAge, assetV .+ 0.001, hV);
-		@test all(util2M .> utilM)
-
-		# Test against state by state
-		util3M = similar(utilM);
-		for (ih, h) in enumerate(hV)
-            for (ia, a) in enumerate(assetV)
-                # Must be qualified b/c exported by two packages
-				util3M[ia, ih] = CollegeStratWorker.lifetime_utility(w, workStartAge, assetV[ia], hV[ih]);
-			end
-		end
-		@test all(util3M .≈ utilM)
-
-		# Vector
-		h2V = fill(hV[1], length(assetV));
-		util3V = lifetime_utility_vector(w, workStartAge, assetV, h2V);
-		@test all(util3V .≈ utilM[:, 1])
-
-		# MU wealth
-		ltIncome = [1.2 2.3; 3.4 4.5];
-		mu = CollegeStratWorker.mu_wealth(w, workStartAge, ltIncome);
-		@test size(ltIncome) == size(mu)
-		@test all(mu .> 0.0)
-
+function consumption_test()
+	@testset "Consumption" begin
+		w = csw.make_test_worker(3);
+		workStartAge = 2;
+		ltIncome = [3.4 2.1; 9.2 4.7];
 		# Consumption at age 1
-		c1 = CollegeStratWorker.cons_age1(w, workStartAge, ltIncome);
+		c1 = csw.cons_age1(w, workStartAge, ltIncome);
 		@test size(c1) == size(ltIncome)
 		@test all(c1 .> 0.0)
+
+		lty = 3.9;
+		ltyTotal = lty + csw.pv_retire_income(w, workStartAge);
+		c1 = csw.cons_age1(w, workStartAge, lty);
+		cV = csw.cons_path(w, workStartAge, lty);
+		@test length(cV) == csw.cons_periods(w, workStartAge);
+		@test isapprox(cV[1], c1)
+		@test isapprox(present_value(cV, w.R), ltyTotal)
     end
 end
 
@@ -166,13 +174,18 @@ function simulate_test()
 
         simulate_workers!(wh, workerV);
         @test validate_wh(wh)
+
+		wh2 = csw.make_test_work_histories(nSchool, nSim);
+		@test validate_wh(wh2);
     end
 end
 
 
 @testset "Worker" begin
+	access_test();
 	earnings_test();
-	utility_test();
+	consumption_test();
+	include("lifetime_utility_test.jl");
 	include("compensating_var_test.jl");
     # worker_set_test();
     simulate_test();

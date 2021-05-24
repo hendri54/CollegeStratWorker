@@ -80,26 +80,6 @@ function simulate_workers!(wh :: WorkHistories{F1},
         if !isempty(sIdxV)
             simulate_one_worker!(wh, workerV[iSchool], sIdxV);
         end
-        # for workStartAge in startAgeV
-        #     idxV = (school_index(wh) .== iSchool) .& 
-        #         (work_start_ages(wh) .== workStartAge);
-        #     if !isempty(idxV)
-        #         simulate_one_work_start!(wh, wk, workStartAge, idxV);
-                # # Earnings at work start
-                # # Earnings profile, up to `h` factor
-                # earnWorkStart = earn_profile(wk, workStartAge, 1.0; experV = 1);
-                # wh.earnWorkStartV[idxV] = h_work_start(wh)[idxV] .* earnWorkStart;
-
-                # wh.ltEarnV[idxV] .= lifetime_earnings(wk, workStartAge, 
-                #     h_work_start(wh)[idxV]);
-                # # Bound below in case we have bad parameter values during testing
-                # ltIncomeV = max.(0.1, wh.ltEarnV[idxV] .+ k_work_start(wh)[idxV]);
-                # # Consumption at work start
-                # wh.cWorkStartV[idxV] .= cons_age1(wk, workStartAge, ltIncomeV);
-                # # Marginal utility of wealth as of work start
-                # wh.muWealthV[idxV] .= mu_wealth(wk, workStartAge, ltIncomeV);
-        #     end
-        # end
     end
 
     @assert validate_wh(wh)
@@ -142,6 +122,24 @@ function simulate_one_work_start!(wh :: WorkHistories{F1}, wk :: Worker{F1},
     # Marginal utility of wealth as of work start
     wh.muWealthV[idxV] .= mu_wealth(wk, workStartAge, ltIncomeV);
     return nothing
+end
+
+
+function make_test_work_histories(nSchool :: Integer, nSim :: Integer)
+    rng = MersenneTwister(43);
+    iSchoolV = rand(rng, UInt8.(1 : nSchool), nSim);
+    workStartAgeV = rand(rng, TimeInt.(1:5), nSim);
+    hWorkStartV = 1.0 .+ 2.0 .* rand(rng, nSim);
+    kWorkStartV = rand(rng, nSim) .- 0.1;
+    earnWorkStartV = 9.0 .+ 3.0 .* rand(rng, nSim);
+    ltEarnV = 10.5 .* earnWorkStartV;
+    muWealthV = 5.0 ./ earnWorkStartV;
+    cWorkStartV = 0.7 .* earnWorkStartV;
+
+    wh = WorkHistories(iSchoolV, workStartAgeV, hWorkStartV, kWorkStartV,
+        earnWorkStartV, ltEarnV, muWealthV, cWorkStartV);
+    @assert validate_wh(wh)  "Invalid Test work history"
+    return wh
 end
 
 # ----------------

@@ -1,3 +1,5 @@
+# no longer used +++++
+
 function Base.show(io :: IO,  ws :: WorkerSet{F1}) where F1
     print(io,  "WorkerSet:",  ws.switches);
 end
@@ -12,7 +14,7 @@ n_school(wss :: WorkerSetSwitches) = wss.nSchool;
 
 # Fixed utility while working
 # Expressed as utility from fixed leisure
-# Bad input argument +++++++
+# Bad input argument +++
 function u_fixed(ws :: WorkerSet{F1},  utilS,  s :: Integer) where F1
     if utilS.hasWorkLeisure
         u = UtilityFunctionsLH.CRRA(utilS.lCurvature, true);
@@ -66,7 +68,7 @@ function init_wages(objId :: ObjectId, nSchool :: Integer)
     # Starting wages of HSGs are only on the order of $10k; $20k for CGs (in Oksana's data).
     dataWageV = collect(range(10_000.0, 20_000.0, length = nSchool));
     # modelWageV = dollars_data_to_model(dataWageV, :perYear);
-    modelWageV = dataWageV ./ 1000.0;  # ++++++++
+    modelWageV = dataWageV ./ 1000.0;  # +++
     logWageV = log.(modelWageV);
     ns = length(dataWageV);
 
@@ -96,8 +98,11 @@ function make_worker(ws :: WorkerSet{F1},  utilS,  R :: F1,  s :: Integer) where
     u = UtilityFunctionsLH.CRRA(utilS.cCurvature, true);
     uFct = WorkerUtility(u,  utilS.discFactor,  u_fixed(ws, utilS, s));
     retireIncome = zero(F1); # give workers retirement income +++
+    kMin, kMax = k_range(ws);
+    hMin, hMax = h_range(ws);
     return Worker(uFct, ws.xp, wage(ws, s), R, ws.switches.retireAge,
-        ws.switches.retireDuration, retireIncome)
+        ws.switches.retireDuration, retireIncome,
+        kMin, kMax, hMin, hMax)
 end
 
 

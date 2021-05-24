@@ -34,6 +34,11 @@ mutable struct Worker{F1 <: AbstractFloat}
     retireAge :: TimeInt
     retireDuration :: TimeInt
     retireIncome :: F1
+    # Bounds for asset and human capital values
+    kMin :: F1
+    kMax :: F1
+    hMin :: F1
+    hMax :: F1
 end
 
 
