@@ -1,7 +1,7 @@
 name = "CollegeStratWorker"
 uuid = "2a03911c-38cb-4991-90cf-b19c323ec85f"
 authors = ["hendri54 <hendricksl@protonmail.com>"]
-version = "0.2"
+version = "0.2.1"
 
 [deps]
 CollegeStratBase = "bfa38a7c-6709-4380-90e8-18b172effef4"
@@ -19,6 +19,9 @@ UtilityFunctionsLH = "6b9ba4b8-a244-52b4-a4eb-1047c71ea0f4"
 
 [compat]
 julia = "^1"
+Interpolations = "0.13"
+NLopt = "0.6"
+Roots = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
