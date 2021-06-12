@@ -19,6 +19,7 @@ UtilityFunctionsLH = "6b9ba4b8-a244-52b4-a4eb-1047c71ea0f4"
 
 [compat]
 Documenter = "0.27"
+DocStringExtensions = "0.8"
 Interpolations = "0.13"
 NLopt = "0.6"
 Roots = "1"
