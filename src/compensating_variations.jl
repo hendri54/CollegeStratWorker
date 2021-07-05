@@ -2,7 +2,8 @@
 	$(SIGNATURES)
 
 Compute pre-retirement lifetime income that gives a given level of utility. For many utility levels.
-This is more efficient that computing one at a time because search bounds can be set intelligently.
+This is more efficient than computing one at a time because search bounds can be set intelligently.
+When lifetime incomes are out of bounds: return the bounds.
 """
 function ltincome_from_utility(wk :: Worker{F1}, workStartAge :: Integer, 
     ltUtilityV :: Vector{F1},  ltyLb :: F1,  ltyUb :: F1) where F1 <: AbstractFloat
@@ -54,6 +55,7 @@ end
 
 Given a worker, find the pre-retirement lifetime income that gives a given level of utility.
 This requires numerical root finding. So it will be slow.
+Bounds for the search range are provided as inputs. If values are out of bounds, the bounds are returned. This only happens with poor parameter values (during calibration).
 """
 function ltincome_from_utility(wk :: Worker{F1}, workStartAge :: Integer, 
     ltUtility :: F1, lb :: F1, ub :: F1) where F1
@@ -61,10 +63,16 @@ function ltincome_from_utility(wk :: Worker{F1}, workStartAge :: Integer,
     dev_fct(x) = (lifetime_utility(wk, workStartAge, x) .- ltUtility);
 
     dLow = dev_fct(lb);
-    @assert dLow < 0.0  "Lower bound too high: $lb for $ltUtility"
+    if dLow >= 0.0  
+        @warn "Lower bound too high: $lb for $ltUtility";
+        return lb
+    end
 
     dHigh = dev_fct(ub);
-    @assert dHigh > 0.0  "Upper bound too low: $ub for $ltUtility"
+    if dHigh <= 0.0  
+        @warn "Upper bound too low: $ub for $ltUtility";
+        return ub
+    end
 
     # optS = nlopt_init(dev_fct, lb, ub);
     # fVal, solnV, exitFlag = NLopt.optimize(optS, typicalLtIncome);
