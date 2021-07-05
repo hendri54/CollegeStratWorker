@@ -64,13 +64,13 @@ function ltincome_from_utility(wk :: Worker{F1}, workStartAge :: Integer,
 
     dLow = dev_fct(lb);
     if dLow >= 0.0  
-        @warn "Lower bound too high: $lb for $ltUtility";
+        # @warn "Lower bound too high: $lb for $ltUtility";
         return lb
     end
 
     dHigh = dev_fct(ub);
     if dHigh <= 0.0  
-        @warn "Upper bound too low: $ub for $ltUtility";
+        # @warn "Upper bound too low: $ub for $ltUtility";
         return ub
     end
 
