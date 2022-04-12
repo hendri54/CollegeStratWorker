@@ -76,6 +76,7 @@ end
 	$(SIGNATURES)
 
 Make a continuous function that gives lifetime utility as a function of assets and h at work start.
+Extrapolation uses a constant. User needs to check that bounds are not exceeded.
 """
 function lifetime_utility_function(wk :: Worker{F1}, 
     workStartAge :: Integer;
@@ -88,7 +89,9 @@ function lifetime_utility_function(wk :: Worker{F1},
     util_ahM = lifetime_utility_grid(wk, workStartAge, kGridV, hGridV);
     # f = CubicSplineInterpolation((kGridV, hGridV), util_ahM);
     # The long way round construction supports `bounds`
-    f = scale(interpolate(util_ahM, BSpline(Cubic(Line(OnGrid())))), kGridV, hGridV);
+    itp = interpolate(util_ahM, BSpline(Cubic(Line(OnGrid()))));
+    xtp = extrapolate(itp, Flat());
+    f = scale(xtp, kGridV, hGridV);
     return f
 end
 
@@ -156,7 +159,7 @@ end
 function make_test_lifetime_utility_function(
     workStartAge :: Integer, iSchool :: Integer;
     kMin = -50.0, kMax = 50.0, hMin = 1.0, hMax = 5.0)
-    wk = make_test_worker(iSchool);
+    wk = make_test_worker(iSchool; hMin, hMax);
     v = lifetime_utility_function(wk, workStartAge);
         # kMin = kMin, kMax = kMax, hMin = hMin, hMax = hMax);
     return v

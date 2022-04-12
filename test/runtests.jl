@@ -55,8 +55,10 @@ function earnings_test()
 	@testset "Lifetime earnings" begin
 		wk = CollegeStratWorker.make_test_worker(2);
         @test validate_worker(wk);
-        println("\n-------------")
-		println(wk);
+        # println("\n-------------")
+		# println(wk);
+		hMin = csw.h_min(wk);
+		hMax = csw.h_max(wk);
 
 		xV = log_exper_profile(wk, 1; experV = 1 : 10);
 		@test xV[1] ≈ 0.0
@@ -65,7 +67,7 @@ function earnings_test()
 		x2V = log_exper_profile(wk, 5);
 
 		workStartAge = 3;
-		h0 = 1.5;
+		h0 = 0.5 * (hMin + hMax);
 		earn10 = earn_profile(wk, workStartAge, h0, experV = 10);
 		@test earn10 > 0.0
 		@test isa(earn10, AbstractFloat)
@@ -73,20 +75,34 @@ function earnings_test()
 		xpV = 7 : 15;
 		earnV = earn_profile(wk, workStartAge, h0, experV = xpV);
 		@test all(earnV .> 0.0)
-		@test size(earnV) == size(xpV)
+		@test size(earnV) == size(xpV);
 
-		hM = [2.0 3.0 4.0; 0.6 0.7 0.8];
+		earnWorkStart = csw.earn_work_start(wk, h0);
+		earn1 = earn_profile(wk, workStartAge, h0, experV = [1]);
+		@test isapprox(earn1[1], earnWorkStart);
+
+		earnFct = csw.earn_work_start_function(wk);
+		earn2 = earnFct(h0);
+		@test isapprox(earn2, earnWorkStart);
+
+		hM = hMin .+ (hMax - hMin) .* [0.9 0.3 0.2; 0.6 0.7 0.8];
 		workStartAge = 2;
-		ltyV = lifetime_earnings(wk, workStartAge, hM);
-		@test all(ltyV .> 0) && (size(ltyV) == size(hM))
+		ltyM = lifetime_earnings(wk, workStartAge, hM);
+		@test all(ltyM .> 0) && (size(ltyM) == size(hM));
+
+		lty_fct = lifetime_earnings_function(wk, workStartAge);
+		for (j, h) in enumerate(hM)
+			lty2 = lty_fct(h);
+			@test isapprox(lty2, ltyM[j]);
+		end
 
 		for (j, h) in enumerate(hM)
 			lty2 = present_value(earn_profile(wk, workStartAge, h), wk.R);
-			@test isapprox(lty2, ltyV[j])
+			@test isapprox(lty2, ltyM[j])
 		end
 
 		lty2V = lifetime_earnings(wk, workStartAge + 1, hM);
-		@test all(lty2V .< ltyV)
+		@test all(lty2V .< ltyM);
 
 		# Retirement income
 		T = csw.life_span(wk, workStartAge);

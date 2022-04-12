@@ -7,7 +7,7 @@ using CommonLH, StructLH, UtilityFunctionsLH, ModelObjectsLH, ModelParams
 import Roots: find_zero
 
 # const Double = Float64;
-const TimeInt = UInt8;
+# const TimeInt = UInt8;
 
 export Worker, WorkerUtility
 # Utility
@@ -16,9 +16,9 @@ export cons_age1, mu_wealth,
     lifetime_utility_function, interpolation_deviation,
     lifetime_utility_function_grid
 # Worker
-export log_exper_profile, exper_profile, earn_profile, lifetime_earnings, 
-    ltincome_from_utility,
-    make_test_worker, validate_worker
+export log_exper_profile, exper_profile, earn_profile, earn_work_start, earn_work_start_function;
+export lifetime_earnings, lifetime_earnings_function,  ltincome_from_utility,
+    make_test_worker, validate_worker;
 
 # WorkHistories
 export WorkHistories, make_test_work_histories,

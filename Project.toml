@@ -1,7 +1,7 @@
 name = "CollegeStratWorker"
 uuid = "2a03911c-38cb-4991-90cf-b19c323ec85f"
 authors = ["hendri54 <hendricksl@protonmail.com>"]
-version = "0.2.3"
+version = "1.0"
 
 [deps]
 CollegeStratBase = "bfa38a7c-6709-4380-90e8-18b172effef4"

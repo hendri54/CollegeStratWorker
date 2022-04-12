@@ -1,6 +1,7 @@
 # ----------------------  Worker
 
-function make_test_worker(s :: Integer)
+function make_test_worker(s :: Integer;
+    kMin = -20.0, kMax = 75.0, hMin = 1.0, hMax = 5.0)
     uFct = make_test_worker_utility();
     retireAge = TimeInt(45);
     retireDuration = TimeInt(15);
@@ -8,10 +9,6 @@ function make_test_worker(s :: Integer)
     retireIncome = 0.5 * wage;
     R = 1.04;
     xp = collect(range(0.0, 0.6, length = retireAge));
-    kMin = -20.0;
-    kMax = 75.0;
-    hMin = 1.0;
-    hMax = 9.5;
     return Worker(uFct, xp, wage, R, retireAge, retireDuration, retireIncome,
         kMin, kMax, hMin, hMax)
 end
@@ -143,6 +140,39 @@ end
 
 
 """
+	$(SIGNATURES)
+
+Continuous function of (h). Lifetime earnings, discounted to
+work start age.
+"""
+function earn_work_start_function(wk :: Worker{F1};
+    hMin = h_min(wk), hMax = h_max(wk),  nh = 100) where F1
+
+    hGridV = h_grid(hMin, hMax, nh);
+    earnWorkStartV = earn_work_start(wk, hGridV);
+    # The long way round construction supports `bounds`
+    itp = interpolate(earnWorkStartV, BSpline(Cubic(Line(OnGrid()))));
+    xtp = extrapolate(itp, Flat());
+    f = scale(xtp, hGridV);
+    return f
+end
+
+
+function earn_work_start(wk :: Worker{F1}, hWorkStart) where F1
+    earn = hWorkStart .* wk.wage;
+    return earn
+end
+
+
+function make_test_earn_work_start_function(iSchool :: Integer;
+    kMin = -20.0, kMax = 75.0, hMin = 1.0, hMax = 5.0)
+    wk = make_test_worker(iSchool; kMin, kMax, hMin, hMax);
+    v = earn_work_start_function(wk);
+    return v
+end
+
+
+"""
     $(SIGNATURES)
 
 Lifetime earnings for a vector of h. Discounted to `workStartAge`.
@@ -163,6 +193,53 @@ function lifetime_earnings(w :: Worker{F1}, workStartAge :: Integer, h :: F1) wh
     @assert lty > 0.0
     return lty
 end
+
+
+"""
+	$(SIGNATURES)
+
+Continuous function of (h). Lifetime earnings, discounted to
+work start age.
+"""
+function lifetime_earnings_function(wk :: Worker{F1}, 
+    workStartAge :: Integer;
+    hMin = h_min(wk), hMax = h_max(wk),
+    nh = 100) where F1
+
+    # kGridV = asset_grid(kMin, kMax, nk);
+    hGridV = h_grid(hMin, hMax, nh);
+    ltEarnV = lifetime_earnings(wk, workStartAge, hGridV);
+    # The long way round construction supports `bounds`
+    itp = interpolate(ltEarnV, BSpline(Cubic(Line(OnGrid()))));
+    xtp = extrapolate(itp, Flat());
+    f = scale(xtp, hGridV);
+    return f
+end
+
+
+function make_test_lifetime_earnings_function(iSchool, workStartAge :: Integer;
+    hMin = 1.0, hMax = 5.0)
+    wk = make_test_worker(iSchool; hMin, hMax);
+    v = lifetime_earnings_function(wk, workStartAge);
+    return v
+end
+
+
+# function lifetime_earnings_grid(w :: Worker{F1}, workStartAge :: Integer, 
+#     assetV :: AbstractVector{F1}, hV :: AbstractVector{F1}) where F1
+
+#     nh = length(hV);
+#     na = length(assetV);
+#     ltEarnV = lifetime_earnings(w, workStartAge, hV);
+
+#     ltearn_ahM = zeros(F1, na, nh);
+#     for ih in 1 : nh
+#         for ia in 1 : na
+#             ltearn_ahM[ia, ih] = lifetime_earnings(w, workStartAge, hV[ih]);
+#         end
+#     end
+#     return ltearn_ahM
+# end
 
 
 # ---------------
