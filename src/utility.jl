@@ -23,7 +23,7 @@ util_fixed(u :: WorkerUtility{F1}) where F1 = u.utilFixed;
 	$(SIGNATURES)
 
 Lifetime utility for given lifetime income `ltIncome`, life-span `T`.
-Includes fixed utility `utilFixed`.
+Includes fixed utility `utilFixed` (received each year).
 """
 function lifetime_utility(u :: WorkerUtility{F1}, T :: Integer,  R :: F1, ltIncome) where F1
     pBeta = discount_factor(u);

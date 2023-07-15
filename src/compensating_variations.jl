@@ -8,6 +8,7 @@ When lifetime incomes are out of bounds: return the bounds.
 function ltincome_from_utility(wk :: Worker{F1}, workStartAge :: Integer, 
     ltUtilityV :: Vector{F1},  ltyLb :: F1,  ltyUb :: F1) where F1 <: AbstractFloat
 
+    @argcheck ltyUb > ltyLb;
     n = length(ltUtilityV);
     ltIncomeV = zeros(F1, n);
 
@@ -15,36 +16,51 @@ function ltincome_from_utility(wk :: Worker{F1}, workStartAge :: Integer,
     sortIdxV = sortperm(ltUtilityV);
 
     # Solve lowest and highest to get bounds
-    j = sortIdxV[1];
+    # It is possible that all values are out of bounds (for poor param guesses)
+    jFirst = first(sortIdxV);
     lb = ltyLb;
     ub = ltyUb;
-    ltIncomeV[j] = ltincome_from_utility(wk, workStartAge, ltUtilityV[j], lb, ub);
+    lb = ltincome_from_utility(wk, workStartAge, 
+        ltUtilityV[jFirst], lb, ub);
 
-    j = sortIdxV[n];
-    lb = ltIncomeV[sortIdxV[1]];
-    ltIncomeV[j] = ltincome_from_utility(wk, workStartAge, ltUtilityV[j], lb, ub);
+    jLast = last(sortIdxV);
+    ub = ltincome_from_utility(wk, workStartAge, 
+        ltUtilityV[jLast], lb, ub);
 
-    # Solve the rest using known cases as bounds
-    # Determine order such that good bounds are always nearby.
-    solveIdxV = sortIdxV[bisecting_indices(1, n)];
-    for j = 3 : n
-        idx = solveIdxV[j];
-        ltUtil = ltUtilityV[idx];
+    @assert ltUtilityV[jLast] > ltUtilityV[jFirst]  "CollegeStratWorker: invalid ltUtility ranking";
+    # @assert ltIncomeV[jLast] > ltIncomeV[jFirst]  "CollegeStratWorker: invalid ltIncome ranking";
 
-        # Find first person already solved with utility above this one.
-        idxUb = findfirst((ltUtilityV[sortIdxV] .> ltUtil)  .&  
-            (ltIncomeV[sortIdxV] .> 0.0));
-        @assert idxUb > 0
-        idxUb = sortIdxV[idxUb];
-        
-        # Find last person already solved with utility below this one.
-        idxLb = findlast((ltUtilityV[sortIdxV] .< ltUtil)  .&  
-            (ltIncomeV[sortIdxV] .> 0.0));
-        idxLb = sortIdxV[idxLb];
-        ltIncomeV[idx] = ltincome_from_utility(wk, workStartAge, ltUtil,
-            ltIncomeV[idxLb], ltIncomeV[idxUb]);
+    if isapprox(lb, ub)
+        ltIncomeV .= ub;
+    else
+        ltIncomeV[jFirst] = lb;
+        ltIncomeV[jLast] = ub;
+        # Solve the rest using known cases as bounds
+        # Determine order such that good bounds are always nearby.
+        solveIdxV = sortIdxV[bisecting_indices(1, n)];
+        for j = 3 : n
+            idx = solveIdxV[j];
+            ltUtil = ltUtilityV[idx];
+
+            # Find first person already solved with utility above this one.
+            idxUb = findfirst((ltUtilityV[sortIdxV] .> ltUtil)  .&  
+                (ltIncomeV[sortIdxV] .> 0.0));
+
+            if isnothing(idxUb)
+                @infiltrate
+            end
+
+            @assert idxUb > 0
+            idxUb = sortIdxV[idxUb];
+            
+            # Find last person already solved with utility below this one.
+            idxLb = findlast((ltUtilityV[sortIdxV] .< ltUtil)  .&  
+                (ltIncomeV[sortIdxV] .> 0.0));
+            idxLb = sortIdxV[idxLb];
+            ltIncomeV[idx] = ltincome_from_utility(wk, workStartAge, ltUtil,
+                ltIncomeV[idxLb], ltIncomeV[idxUb]);
+        end
     end
-
     @assert all_greater(ltIncomeV, 0.01)
     return ltIncomeV
 end

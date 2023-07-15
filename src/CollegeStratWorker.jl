@@ -1,6 +1,6 @@
 module CollegeStratWorker
 
-using DocStringExtensions, Interpolations, Random
+using ArgCheck, DocStringExtensions, Infiltrator, Interpolations, Random
 using CollegeStratBase
 using CommonLH, StructLH, UtilityFunctionsLH, ModelObjectsLH, ModelParams
 
